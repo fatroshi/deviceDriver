@@ -1,0 +1,4 @@
+Create a device file
+mknode /dev/yourDeviceName  b(blocking)/c(character type) Major_number Minor_number
+Example: 
+mknode /dev/myDevice/ c 800 1

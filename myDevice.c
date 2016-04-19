@@ -32,10 +32,10 @@ int device_open(struct inode * inode, struct file * filp){
 	// Only allow one process to open this device file by using semaphore 
 	// as mutal exclusive lock - mutex
 	if(down_interruptible(&virtual_device.sem) !=0){
-		printk(KERN_ALERT "elise: could not lock device file during open");
+		printk(KERN_ALERT "elise: could not lock device file during open\n");
 		return -1;
 	}
-	printk(KERN_ALERT "elise: opened device");
+	printk(KERN_ALERT "elise: opened device\n");
 	return 0;
 }
 
@@ -48,8 +48,8 @@ int device_open(struct inode * inode, struct file * filp){
 ssize_t device_read(struct file * filp, char * bufStoreData, size_t buffCount, loff_t * curOffset){
 	// Take data from kernel space(device) to the user space (process)
 	// copy_to_user(destination,source,sizeToTransfer)
-	printk(KERN_INFO "elise: reading from the device file");
 	ret = copy_to_user(bufStoreData,virtual_device.data,buffCount);
+	printk(KERN_INFO "elise: reading from the device file: %s \n", virtual_device.data);
 	return ret;
 }
 
@@ -62,8 +62,9 @@ ssize_t device_read(struct file * filp, char * bufStoreData, size_t buffCount, l
 ssize_t device_write(struct file* filp, const char * bufSourceData,size_t bufCount, loff_t* curOffset){
 	// Send data from user to kernel
 	// copy_to_user(source, destination, sizeToTransfer)
-	printk(KERN_INFO "elise: writing to the device file");
+	
 	ret = copy_from_user(virtual_device.data, bufSourceData, bufCount);
+	printk(KERN_INFO "elise: writing to the device file: %s\n", virtual_device.data);
 	return ret;
 } 
 
@@ -75,7 +76,7 @@ int device_close(struct inode * inode, struct file * filp){
 	// mutex that we obtained at device open. This has the effect of allowing other
 	// process to use the device now.
 	up(&virtual_device.sem);
-	printk(KERN_INFO "elise: closed the device file");
+	printk(KERN_INFO "elise: closed the device file\n");
 	return 0;  
 }
 
@@ -103,14 +104,14 @@ static int driver_entry(void){
 	ret = alloc_chrdev_region(&dev_num, 0, 1, DEVICE_NAME);
 
 	if(ret < 0){
-		printk(KERN_ALERT "elise: failed to allocate a major number");
+		printk(KERN_ALERT "elise: failed to allocate a major number\n");
 		// Propagate error
 		return ret;
 	}
 
 	major_number = MAJOR(dev_num); 		// Extract the major number and store in our macro
-	printk(KERN_INFO "elise: Major number is %d", major_number);
-	printk(KERN_INFO "\tuse \"mknod /dev/%s c %d 0\" for device file", DEVICE_NAME,major_number);
+	printk(KERN_INFO "elise: Major number is %d\n", major_number);
+	printk(KERN_INFO "elise: Use \"mknod /dev/%s c %d 0\" for device file\n", DEVICE_NAME,major_number);
 
 
 	// Step 3.2
@@ -124,7 +125,7 @@ static int driver_entry(void){
 	ret = cdev_add(mycdev, dev_num, 1);
 
 	if(ret <0){
-		printk(KERN_ALERT "elise: unable to add cdev to kernel");
+		printk(KERN_ALERT "elise: unable to add cdev to kernel\n");
 		return ret;
 	} 
 
@@ -140,7 +141,7 @@ static void driver_exit(void){
 	cdev_del(mycdev);
 	// b
 	unregister_chrdev_region(dev_num,1); 
-	printk(KERN_ALERT "elise: unloaded module");
+	printk(KERN_ALERT "elise: unloaded module\n");
 }
 
 /* Give descriptive information about the module
